@@ -39,6 +39,7 @@ enum State
     WAIT,
     NA
 };
+State nextState;
 State currentState;
 
 int limitUpClosed;
@@ -55,14 +56,15 @@ void waitState();
 void updateInputs();
 
 void setup()
-{   
+{
     limitUpClosed = false;
     limitDownClosed = false;
     dogPresent = false;
     timeForWait = 10; // 10 seconds
     timeForWait = timeForWait * 1000;
     startTimer = true;
-    currentState = HOME;
+    nextState = HOME;
+    currentState = NA;
     step = 0;
     pinMode(DOWN_SENSOR, INPUT);
     pinMode(UP_SENSOR, INPUT);
@@ -83,25 +85,29 @@ void loop()
 {
     updateInputs();
 
-    switch (currentState)
+    switch (nextState)
     {
     case HOME:
         homeState();
+        currentState = HOME;
         break;
     case READ_TAG:
         readTagState();
+        currentState = READ_TAG;
         break;
     case UP:
         upState();
+        currentState = UP;
         break;
     case WAIT:
         waitState();
+        currentState = WAIT;
         break;
 
     default:
         break;
     }
-    delay(2);
+    //delay(2);
 }
 
 void updateInputs()
@@ -113,16 +119,18 @@ void updateInputs()
 
 void homeState()
 {
-    Serial.println("Home state");
+    if (currentState != nextState)
+        Serial.println("Home state");
+
     if (dogPresent)
     {
-        currentState = UP;
+        nextState = UP;
         return;
     }
 
     if (limitDownClosed)
     {
-        currentState = READ_TAG;
+        nextState = READ_TAG;
         return;
     }
     myStepper.step(step);
@@ -131,21 +139,25 @@ void homeState()
 
 void readTagState()
 {
-    Serial.println("Read Tag state");
+    if (currentState != nextState)
+        Serial.println("Read Tag state");
+
     if (!mfrc522.PICC_IsNewCardPresent())
     {
         return;
     }
     mfrc522.PICC_HaltA(); // Stop reading
-    currentState = UP;
+    nextState = UP;
 }
 
 void upState()
 {
-    Serial.println("Up state");
+    if (currentState != nextState)
+        Serial.println("Up state");
+
     if (limitUpClosed)
     {
-        currentState = WAIT;
+        nextState = WAIT;
         return;
     }
     myStepper.step(-step);
@@ -154,7 +166,9 @@ void upState()
 
 void waitState()
 {
-    Serial.println("Wait state");
+    if (currentState != nextState)
+        Serial.println("Wait state");
+
     if (startTimer)
     {
         timeNow = millis();
@@ -162,11 +176,12 @@ void waitState()
     }
     if (millis() >= timeNow + timeForWait)
     {
-        currentState = HOME;
+        nextState = HOME;
         startTimer = true;
     }
     else
     {
-        Serial.println("Waitting");
+        Serial.print("Waitting: ");
+        Serial.println((timeNow + timeForWait - millis()) / 1000);
     }
 }
