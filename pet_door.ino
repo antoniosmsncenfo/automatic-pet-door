@@ -41,10 +41,6 @@ enum State
 };
 State currentState;
 
-byte readCard[4];
-String MasterTag;
-String tagID;
-int tagFound;
 int limitUpClosed;
 int limitDownClosed;
 int dogPresent;
@@ -59,10 +55,7 @@ void waitState();
 void updateInputs();
 
 void setup()
-{
-    MasterTag = "E781DAC6"; // REPLACE this Tag ID with your Tag ID!!!
-    tagID = "";
-    tagFound = false;
+{   
     limitUpClosed = false;
     limitDownClosed = false;
     dogPresent = false;
